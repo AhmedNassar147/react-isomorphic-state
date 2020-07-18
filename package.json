@@ -5,11 +5,10 @@
   "license": "MIT",
   "description": "global state without context, supports immutablity",
   "keywords": [
-    "localize",
-    "react-localize",
-    "react-translate",
     "react",
-    "translate"
+    "react-state",
+    "react-global-state",
+    "react-isomorphic-state"
   ],
   "author": "AhmedNassar147 <nassarahmed750@gmail.com>",
   "publishConfig": {
