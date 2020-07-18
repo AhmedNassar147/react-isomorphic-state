@@ -44,7 +44,6 @@ var Notifiers = /** @class */ (function () {
     Notifiers.prototype.clearListeners = function (subscriber) {
         this.listeners = this.listeners.filter(function (f) {
             if (typeof f === "object") {
-                console.log("f.subscriber !== subscriber", f.subscriber !== subscriber);
                 return f.subscriber !== subscriber;
             }
             return f !== subscriber;

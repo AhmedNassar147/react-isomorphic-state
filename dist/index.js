@@ -83,10 +83,14 @@ exports.isomorphicState = function (stateId, initialState) {
         var _a = R.useState(initalState), value = _a[0], setState = _a[1];
         R.useEffect(function () {
             setState(initalState);
+        }, 
+        // eslint-disable-next-line
+        []);
+        R.useEffect(function () {
             notifier.addListener(setState, path);
         }, 
         // eslint-disable-next-line
-        [initalState]);
+        [setState]);
         return value;
     };
     return {
