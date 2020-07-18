@@ -95,10 +95,15 @@ export const isomorphicState = <T>(stateId: PathIdType, initialState: T): Result
 
     R.useEffect(() => {
       setState(initalState)
+    }, 
+    // eslint-disable-next-line
+    []);
+
+    R.useEffect(() => {
       notifier.addListener(setState, path);
     }, 
     // eslint-disable-next-line
-    [initalState]);
+    [setState]);
 
    return value
   };

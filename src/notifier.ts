@@ -65,7 +65,6 @@ export default class Notifiers {
   clearListeners(subscriber: StateAction<any>) {
     this.listeners = this.listeners.filter((f) => {
       if(typeof f === "object"){
-        console.log("f.subscriber !== subscriber", f.subscriber !== subscriber)
         return f.subscriber !== subscriber
       }
 
