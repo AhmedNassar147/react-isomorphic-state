@@ -9,10 +9,11 @@ yarn add rct-isomorphic-state
 npm i rct-isomorphic-state
 ```
 
+``sh
 easy to use.
 it uses Immutable for sake of memory.
 no Context to save components for unnecessary reconciliations (diffing + rerender).
-
+``
 ## this library uses immutable i.e (all states you pass we transform it to immutable refs unless you passed immutable ref)
 
 **NOTE: by default when you request store data we pass javascript values unless you pass `useImmutableResults` prop**
