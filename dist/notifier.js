@@ -10,13 +10,13 @@ var Notifiers = /** @class */ (function () {
         if (path) {
             this.listeners.push({
                 path: utils_1.getProperPath(path),
-                subscriber: subscriber
+                subscriber: subscriber,
             });
             return;
         }
         this.listeners.push(subscriber);
     };
-    Notifiers.prototype.norifyOtherSubscribers = function (path, nextValue) {
+    Notifiers.prototype.notifyOtherSubscribers = function (path, nextValue) {
         this.listeners.forEach(function (fn) {
             var finalPath = utils_1.getProperPath(path);
             if (typeof fn === "object") {
@@ -26,27 +26,25 @@ var Notifiers = /** @class */ (function () {
                 }
                 return;
             }
-            ;
             return fn(nextValue);
         });
     };
     Notifiers.prototype.callListeners = function (path, newValue, currentStateId) {
         var _this = this;
         var properValue = utils_1.getProperStateWithType(newValue);
-        // update the cash
+        // update the cache
         // @ts-ignore
         var toStateValue = this.cache.updateCache(currentStateId, path, properValue);
-        // Let subscribers know value did change async.
+        // Let subscribers know value changed async.
         // call subscribers which are not the caller.
-        setTimeout(function () { return _this.norifyOtherSubscribers(path, toStateValue); });
+        setTimeout(function () { return _this.notifyOtherSubscribers(path, toStateValue); });
     };
-    ;
     Notifiers.prototype.clearListeners = function (subscriber) {
-        this.listeners = this.listeners.filter(function (f) {
-            if (typeof f === "object") {
-                return f.subscriber !== subscriber;
+        this.listeners = this.listeners.filter(function (fn) {
+            if (typeof fn === "object") {
+                return fn.subscriber !== subscriber;
             }
-            return f !== subscriber;
+            return fn !== subscriber;
         });
     };
     return Notifiers;

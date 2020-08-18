@@ -1,46 +1,54 @@
 import * as R from "react";
 import { Map, List } from "immutable";
 
-export type PathIdType = string | string[]
+export type PathIdType = string | string[];
+export type UseImmutableResultsType = "true" | "false";
 
-export type MapForm<T> = Map<keyof T, T[keyof T]>;
+export interface IsomorphicStateProps<T, U = UseImmutableResultsType> {
+  stateId: PathIdType;
+  useSsr?: boolean;
+  useImmutableResults: U;
+  initialState?: T;
+}
 
-// export type GetGenericProperType<T, L> = T extends L ? T : L
+type ImmutableTypes<T> = List<T> | Map<string, any>;
+
+export type StateType<T> = T | ImmutableTypes<T>;
 
 export type StateAction<T> = R.Dispatch<R.SetStateAction<StateType<T>>>;
 
-export type ItratableSubscriber<T> = { 
-  subscriber: StateAction<T>,
-  path: PathIdType 
- } | StateAction<T>;
+export type IteratableSubscriber<T> =
+  | {
+      subscriber: StateAction<T>;
+      path: PathIdType;
+    }
+  | StateAction<T>;
 
-export type ImmutableDataType<T> = List<T> | MapForm<T>
+export type EndUserStateType<T, U = UseImmutableResultsType> = U extends "true"
+  ? ImmutableTypes<T>
+  : T;
 
-// export type StateType<T> = T extends List<T> ? List<T> :  T extends MapForm<T> ? MapForm<T> : T; 
-export type StateType<T> = T | ImmutableDataType<T>; 
-
-// type Ubool = true;
-
-// export type EndUserValueType<O, U = (boolean | undefined)> = U extends Ubool ? ImmutableDataType<any> : O; 
-
-
-export type UpdatedCallback<T> = (oldState: T) => T | any;
-
+export type UpdatedCallback<T> = (oldState: T) => T;
 
 export type UpdaterProps<T> = {
   path: PathIdType;
-  newStateValue: T | UpdatedCallback<T>
+  newStateValue: EndUserStateType<T> | UpdatedCallback<T>;
+};
+
+export type UpdaterPropsGroup<T> = UpdaterProps<T> | UpdaterProps<T>[];
+
+export type Updater<T> = (updateProps: UpdaterPropsGroup<T>) => void;
+
+export type ConsumerResult<T, U = UseImmutableResultsType> = [
+  EndUserStateType<T, U>,
+  Updater<EndUserStateType<T, U>>
+];
+
+export interface ResultProps<T, U = UseImmutableResultsType> {
+  useConsumerState: () => ConsumerResult<T, U>;
+  useValuePathSubscription: <T>(
+    path: PathIdType,
+    initialState?: T
+  ) => EndUserStateType<T, U>;
+  getCache: () => EndUserStateType<T, U>;
 }
-
-export type Updater<T> = (updateProps: UpdaterProps<T> | UpdaterProps<T>[]) => void
-
-
-export type ConsumerResult<T> = [ T, Updater<T> ];
-
-
-export interface ResultProps<T> {
-  useConsumerState: () => ConsumerResult<T>;
-  useValuePathSubscribtion: <T>(path: PathIdType, initalState?: T) => T | undefined;
-  getCach: () => T;
-}
-

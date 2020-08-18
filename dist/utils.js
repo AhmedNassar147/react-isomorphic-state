@@ -1,15 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initialize = exports.getProperStateWithType = exports.getProperPath = void 0;
+exports.getEndUserState = exports.getInitialsStateProps = exports.getProperStateWithType = exports.getProperPath = void 0;
 var immutable_1 = require("immutable");
 exports.getProperPath = function (statId) {
     // if no id provided
     if (!statId) {
-        throw new Error('Please provide Current State Id');
+        throw new Error("Function `getProperPath`:  State Id Must Be Provided.");
     }
     // if path id string or array of strings
     if (!(typeof statId === "string" || (Array.isArray(statId) && !!statId.length))) {
-        throw new Error(statId + " should be Array of strings or string");
+        throw new Error("Function `getProperPath`: `" + statId + "` should be Array of strings or string.");
     }
     if (typeof statId === "string") {
         return [statId];
@@ -20,41 +20,31 @@ exports.getProperStateWithType = function (initialState) {
     if (immutable_1.isImmutable(initialState)) {
         return initialState;
     }
-    ;
     if (typeof initialState === "object") {
-        if (Array.isArray(initialState)) {
-            return immutable_1.List(initialState);
-        }
-        // @ts-ignore
-        return immutable_1.Map(initialState);
+        return immutable_1.fromJS(initialState);
     }
     return initialState;
 };
-exports.initialize = function (stateId, initialState) {
-    var setStateDone = false;
-    var currentStateId = exports.getProperPath(stateId);
-    var initState = exports.getProperStateWithType(initialState);
+exports.getInitialsStateProps = function (stateId, initialState) {
+    if (typeof initialState === "undefined") {
+        // @ts-ignore
+        initialState = immutable_1.Map();
+    }
     return {
-        setStateDone: setStateDone,
-        currentStateId: currentStateId,
-        initState: initState
+        currentStateId: exports.getProperPath(stateId),
+        initState: exports.getProperStateWithType(initialState),
+        setStateDone: false,
     };
 };
-// export const getStateForEndUser = <T>(state: T, useImmutableResults?: boolean)  => {
-//   if(useImmutableResults){
-//     if(isImmutable(state)){
-//       if(Map.isMap(state)){
-//         return state as MapForm<T>
-//       }
-//       if(List.isList(state)){
-//         return state as List<T>;
-//       }
-//     }
-//   };
-//   if(isImmutable(state) && !useImmutableResults){
-//     // @ts-ignore
-//     return state.toJS() as T; 
-//   }
-//   return state;
-// }
+exports.getEndUserState = function (useImmutableResults) { return function (state) {
+    var isImmutableData = immutable_1.isImmutable(state);
+    if (isImmutableData) {
+        if (useImmutableResults) {
+            return state;
+        }
+        // @ts-ignore
+        return state.toJS();
+    }
+    return state;
+}; };
 //# sourceMappingURL=utils.js.map

@@ -8,37 +8,43 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var immutable_1 = require("immutable");
-var Cach = /** @class */ (function () {
-    function Cach() {
+var utils_1 = require("./utils");
+var Cache = /** @class */ (function () {
+    function Cache() {
         this.data = immutable_1.Map();
     }
-    Cach.prototype.injectState = function (path, initialState) {
-        var state = immutable_1.isImmutable(initialState) ? initialState : immutable_1.fromJS(initialState);
+    // get treeNode full path
+    Cache.prototype.getFullPath = function (currentStatePath, path) {
+        return __spreadArrays(currentStatePath, utils_1.getProperPath(path));
+    };
+    Cache.prototype.injectState = function (path, initialState) {
+        var state = utils_1.getProperStateWithType(initialState);
+        // if cash has current id
+        if (this.data.hasIn(path)) {
+            throw new Error("Function `injectState`: `" + path + "` already exists.");
+        }
         // if cash does not contain given id,
         // append new entry with given initial value
-        if (!this.data.hasIn(path)) {
-            this.data = this.data.setIn(path, state);
-        }
-        // if cash has current id
-        // throw new Error(`Function \`injectState\`: \`${id}\` already exsists.`);
+        this.data = this.data.setIn(path, state);
     };
-    ;
-    Cach.prototype.getFullPath = function (currentStatePath, path) {
-        if (typeof path === "string") {
-            return __spreadArrays(currentStatePath, [path]);
-        }
-        return __spreadArrays(currentStatePath, path);
-    };
-    // update cach state with given id
-    Cach.prototype.updateCache = function (currentStatePath, path, newValues) {
+    // update cache state with given id
+    Cache.prototype.updateCache = function (currentStatePath, path, newValues) {
         var fullPath = this.getFullPath(currentStatePath, path);
-        // const values = isImmutable(newValues) ?  : fromJS(newValues);
-        var newData = this.data.setIn(fullPath, newValues);
+        var newData = this.data.setIn(fullPath, utils_1.getProperStateWithType(newValues));
         this.data = newData;
         return newData.getIn(currentStatePath);
     };
-    ;
-    return Cach;
+    // remove whole treeNode or sub path of treeNode
+    Cache.prototype.removeFromCache = function (currentStatePath, path) {
+        var finalPath = currentStatePath;
+        if (path) {
+            finalPath = this.getFullPath(currentStatePath, path);
+        }
+        if (this.data.hasIn(finalPath)) {
+            this.data = this.data.deleteIn(finalPath);
+        }
+    };
+    return Cache;
 }());
-exports.default = Cach;
+exports.default = Cache;
 //# sourceMappingURL=cache.js.map

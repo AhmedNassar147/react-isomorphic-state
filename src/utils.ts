@@ -1,82 +1,74 @@
-import { isImmutable, Map, List } from "immutable";
-import { StateType, PathIdType } from "./interface";
-
+import { isImmutable, fromJS, Map } from "immutable";
+import {
+  StateType,
+  PathIdType,
+  UseImmutableResultsType,
+  EndUserStateType,
+} from "./interface";
 
 export const getProperPath = (statId: PathIdType): string[] => {
-
   // if no id provided
-  if(!statId){
-    throw new Error('Please provide Current State Id')
+  if (!statId) {
+    throw new Error(`Function \`getProperPath\`:  State Id Must Be Provided.`);
   }
 
   // if path id string or array of strings
-  if(!(typeof statId === "string" || (Array.isArray(statId) && !!statId.length))){
-    throw new Error(`${statId} should be Array of strings or string`)
+  if (
+    !(typeof statId === "string" || (Array.isArray(statId) && !!statId.length))
+  ) {
+    throw new Error(
+      `Function \`getProperPath\`: \`${statId}\` should be Array of strings or string.`
+    );
   }
 
-  if(typeof statId === "string"){
-    return [statId]
+  if (typeof statId === "string") {
+    return [statId];
   }
 
-  return statId
-}
-
+  return statId;
+};
 
 export const getProperStateWithType = <T>(initialState: T): StateType<T> => {
-
-  if(isImmutable(initialState)){
+  if (isImmutable(initialState)) {
     return initialState;
-  };
+  }
 
-  if(typeof initialState === "object"){
-
-    if(Array.isArray(initialState)) {
-      return List<T>(initialState)
-    }
-
-    // @ts-ignore
-    return Map<keyof T, T[keyof T]>(initialState);
+  if (typeof initialState === "object") {
+    return fromJS(initialState);
   }
 
   return initialState;
 };
 
-export const initialize = <T>(stateId: PathIdType, initialState: T) => {
-
-  let setStateDone = false;
-  
-  const currentStateId: string[] = getProperPath(stateId);
-
-  const initState = getProperStateWithType(initialState)
-    
-  return {
-    setStateDone,
-    currentStateId,
-    initState
+export const getInitialsStateProps = <T>(
+  stateId: PathIdType,
+  initialState: T
+) => {
+  if (typeof initialState === "undefined") {
+    // @ts-ignore
+    initialState = Map();
   }
-}
 
+  return {
+    currentStateId: getProperPath(stateId),
+    initState: getProperStateWithType(initialState),
+    setStateDone: false,
+  };
+};
 
-// export const getStateForEndUser = <T>(state: T, useImmutableResults?: boolean)  => {
-  
-//   if(useImmutableResults){
+export const getEndUserState = <U = UseImmutableResultsType>(
+  useImmutableResults: U
+) => <T>(state: T): EndUserStateType<T, U> => {
+  const isImmutableData = isImmutable(state);
 
-//     if(isImmutable(state)){
-      
-//       if(Map.isMap(state)){
-//         return state as MapForm<T>
-//       }
-    
-//       if(List.isList(state)){
-//         return state as List<T>;
-//       }
-//     }
-//   };
+  if (isImmutableData) {
+    if (useImmutableResults) {
+      return state as EndUserStateType<T, U>;
+    }
 
-//   if(isImmutable(state) && !useImmutableResults){
-//     // @ts-ignore
-//     return state.toJS() as T; 
-//   }
+    // @ts-ignore
+    return state.toJS() as EndUserStateType<T, U>;
+  }
 
-//   return state;
-// }
+  return state as EndUserStateType<T, U>;
+};

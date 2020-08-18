@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": "src",
-    "lib": ["dom", "es6"],
+    "lib": ["dom", "es6", "ES2017"],
     "target": "es5",
     "module": "commonjs",
     "allowJs": false,

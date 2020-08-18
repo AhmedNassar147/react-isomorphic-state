@@ -25,31 +25,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.isomorphicState = void 0;
 //TODO: a research needed to understand the side effect of ignoring `React` namespace.
 var R = __importStar(require("react"));
-var immutable_1 = require("immutable");
 var cache_1 = __importDefault(require("./cache"));
 var notifier_1 = __importDefault(require("./notifier"));
 var utils_1 = require("./utils");
 var cacheRef = new cache_1.default();
 //  initialize provider.
-exports.isomorphicState = function (stateId, initialState) {
+exports.isomorphicState = function (props) {
+    var stateId = props.stateId, useSsr = props.useSsr, useImmutableResults = props.useImmutableResults, initialState = props.initialState;
+    var useAppEffect = useSsr ? R.useLayoutEffect : R.useEffect;
+    var _a = utils_1.getInitialsStateProps(stateId, initialState), currentStateId = _a.currentStateId, initState = _a.initState, setStateDone = _a.setStateDone;
     var notifier = new notifier_1.default(cacheRef);
-    var _a = utils_1.initialize(stateId, initialState), currentStateId = _a.currentStateId, initState = _a.initState, setStateDone = _a.setStateDone;
+    var getState = utils_1.getEndUserState(useImmutableResults);
     //TODO: Check `useConsumerState` re-execution.
     var useConsumerState = function () {
         var _a = R.useState(initState), state = _a[0], setState = _a[1];
-        var endUserState = R.useMemo(function () { return (immutable_1.isImmutable(state) ? state.toJS() : state); }, [state]);
-        R.useEffect(function () {
-            // If `id` does not exist, add new entry state and added it chache.
-            if (!cacheRef.data.hasIn(currentStateId)) {
-                cacheRef.injectState(currentStateId, initState);
-            }
+        var endUserState = R.useMemo(function () { return getState(state); }, [state]);
+        useAppEffect(function () {
             if (!setStateDone) {
+                // If `currentStateId` does not exist, add new entry state and added it cache.
+                if (!cacheRef.data.hasIn(currentStateId)) {
+                    cacheRef.injectState(currentStateId, initState);
+                }
                 setState(cacheRef.data.getIn(currentStateId));
                 setStateDone = true;
             }
             notifier.addListener(setState);
             return function () {
-                // eslint-disable-next-line
                 notifier.clearListeners(setState);
             };
         }, [setState]);
@@ -57,17 +58,19 @@ exports.isomorphicState = function (stateId, initialState) {
             var path = _a.path, newStateValue = _a.newStateValue;
             // if no path provided
             if (!path) {
-                throw new Error('Please provide Path to update');
+                throw new Error("Please provide Path to update");
             }
             // if path not string or array of strings
             if (!(typeof path === "string" || Array.isArray(path))) {
                 throw new Error(path + " should be Array of strings or string");
             }
             // we always provide JS value here to save data from use editing data with immutable him self
-            var newValue = newStateValue instanceof Function ? newStateValue(endUserState) : newStateValue;
+            var newValue = newStateValue instanceof Function
+                ? newStateValue(endUserState)
+                : newStateValue;
             notifier.callListeners(path, newValue, currentStateId);
         }, [endUserState]);
-        // act as setState but we call linsgners to notify all components those listgn to current state
+        // act as setState but we call listeners to notify all components those listen to current state
         var updater = R.useCallback(function (updateProps) {
             if (Array.isArray(updateProps)) {
                 updateProps.forEach(setUpdates);
@@ -79,25 +82,25 @@ exports.isomorphicState = function (stateId, initialState) {
         return [endUserState, updater];
     };
     // subscribe to deep path not the whole state
-    var useValuePathSubscribtion = function (path, initalState) {
-        var _a = R.useState(initalState), value = _a[0], setState = _a[1];
-        R.useEffect(function () {
-            setState(initalState);
+    var useValuePathSubscription = function (path, initialState) {
+        var _a = R.useState(initialState), value = _a[0], setState = _a[1];
+        useAppEffect(function () {
+            setState(initialState);
         }, 
         // eslint-disable-next-line
         []);
-        R.useEffect(function () {
+        useAppEffect(function () {
             notifier.addListener(setState, path);
+            return function () { return notifier.clearListeners(setState); };
         }, 
         // eslint-disable-next-line
         [setState]);
-        return value;
+        return R.useMemo(function () { return getState(value); }, [value]);
     };
     return {
         useConsumerState: useConsumerState,
-        useValuePathSubscribtion: useValuePathSubscribtion,
-        // @ts-ignore
-        getCach: function () { return cacheRef.data.toJS(); },
+        useValuePathSubscription: useValuePathSubscription,
+        getCache: function () { return getState(cacheRef.data); },
     };
 };
 exports.default = exports.isomorphicState;

@@ -1,75 +1,77 @@
-import Cashe from './cache';
+import Cache from "./cache";
 import { getProperPath, getProperStateWithType } from "./utils";
-import { PathIdType, ItratableSubscriber, StateType, StateAction } from "./interface";
-
+import {
+  PathIdType,
+  IteratableSubscriber,
+  StateType,
+  StateAction,
+} from "./interface";
 
 export default class Notifiers {
-  private cache: Cashe;
+  private cache: Cache;
 
-  constructor(cache: Cashe){
-    this.cache =  cache;
+  constructor(cache: Cache) {
+    this.cache = cache;
   }
 
-  listeners: ItratableSubscriber<any>[] = [];
+  listeners: IteratableSubscriber<any>[] = [];
 
-  addListener(subscriber: StateAction<any>, path?: PathIdType){
-
-    if(path){
+  addListener(subscriber: StateAction<any>, path?: PathIdType) {
+    if (path) {
       this.listeners.push({
         path: getProperPath(path),
-        subscriber
-      })
-      
+        subscriber,
+      });
+
       return;
     }
 
-    this.listeners.push(subscriber)
+    this.listeners.push(subscriber);
   }
 
-  private norifyOtherSubscribers<T>(path: PathIdType, nextValue: StateType<T>) {
-
-    this.listeners.forEach((fn: ItratableSubscriber<T>) => {
+  private notifyOtherSubscribers<T>(path: PathIdType, nextValue: StateType<T>) {
+    this.listeners.forEach((fn: IteratableSubscriber<T>) => {
       const finalPath = getProperPath(path);
-  
-      if(typeof fn === "object"){
-        if(JSON.stringify(finalPath) === JSON.stringify(fn.path)){
+
+      if (typeof fn === "object") {
+        if (JSON.stringify(finalPath) === JSON.stringify(fn.path)) {
           // @ts-ignore
-          return fn.subscriber(nextValue.getIn(fn.path))
+          return fn.subscriber(nextValue.getIn(fn.path));
         }
         return;
-      };
-  
-     return fn(nextValue)
+      }
+
+      return fn(nextValue);
     });
   }
-
 
   callListeners<T>(
     path: string | string[],
     newValue: T,
-    currentStateId: string[],
+    currentStateId: string[]
   ) {
     const properValue = getProperStateWithType(newValue);
-  
-    // update the cash
+
+    // update the cache
     // @ts-ignore
-    const toStateValue: StateType<T> | undefined = this.cache.updateCache(currentStateId, path, properValue);
-  
-    // Let subscribers know value did change async.
+    const toStateValue: StateType<T> | undefined = this.cache.updateCache(
+      currentStateId,
+      path,
+      properValue
+    );
+
+    // Let subscribers know value changed async.
     // call subscribers which are not the caller.
-    setTimeout(() => this.norifyOtherSubscribers<T>(path, toStateValue));
-  };
-
-
-
-  clearListeners(subscriber: StateAction<any>) {
-    this.listeners = this.listeners.filter((f) => {
-      if(typeof f === "object"){
-        return f.subscriber !== subscriber
-      }
-
-      return f !== subscriber
-    });
+    setTimeout(() => this.notifyOtherSubscribers<T>(path, toStateValue));
   }
 
+  clearListeners<T>(subscriber: StateAction<any>) {
+    this.listeners = this.listeners.filter((fn: IteratableSubscriber<T>) => {
+      if (typeof fn === "object") {
+        return fn.subscriber !== subscriber;
+      }
+
+      return fn !== subscriber;
+    });
+  }
 }

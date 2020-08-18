@@ -1,87 +1,135 @@
 # rct-isomorphic-state
+
 global state for react with no context
 
-
 # installation.
+
 ```sh
 yarn add rct-isomorphic-state
 npm i rct-isomorphic-state
 ```
 
+## this library uses immutable i.e (all states you pass we transform it to immutable refs unless you passed immutable ref)
+
+**NOTE: by default when you request store data we pass javascript values unless you pass `useImmutableResults` prop**
 
 ## isomorphicState Props
 
-| Name         |         Type                 | Required |
-| :----------: | :--------------------------: | :------: |
-| stateId      |   string or Array of strings |   true   |
-| initialState |   any / immutable refs       |   false  |
+|        Name         |            Type            | Required |
+| :-----------------: | :------------------------: | :------: |
+|       stateId       | string or Array of strings |   true   |
+|    initialState     |    any / immutable ref     |  false   |
+|       useSsr        |          boolean           |  false   |
+| useImmutableResults |           string           |   true   |
 
+## stateId Prop
 
-## useValuePathSubscribtion Props
+if you passed array of strings we consider that as deep structure path
 
-| Name       |         Type                 | Required |
-| :--------: | :--------------------------: | :------: |
-| path       |   string or Array of strings |   true   |
+```sh
+   const myStore = isomorphicState({
+     stateId: ["prop1", "props2"],
+     initialState: "initialValue"
+    })
 
+    your store state ends up to this structure
+    {
+      prop1:{
+        props2: "initialValue"
+      }
+    }
+```
 
+## initialState Prop
 
-## your could create deep structure by use this way
-  ```sh
-    import isomorphicState from 'rct-isomorphic-state/dist'
-    const state = isomorphicState(["forms", "form1"], initialState);
-  ```
+if you pass undefined value we defaults it to immutable Map
 
-## inner state and functionality is immutable way
+```sh
+   const myStore = isomorphicState({
+     stateId: ["prop1", "props2"],
+    })
+
+```
+
+## useImmutableResults Prop
+
+if you passed string of true value
+
+```sh
+   const myStore = isomorphicState({
+     stateId: ["prop1", "props2"],
+     initialState: {  name: "some name" },
+     useImmutableResults: "true"
+    })
+
+  you can use the state as immutable ref
+
+```
+
+## useValuePathSubscription Props
+
+|     Name     |            Type            | Required |
+| :----------: | :------------------------: | :------: |
+|     path     | string or Array of strings |   true   |
+| initialState |    any / immutable ref     |  false   |
 
 ## 🔨 Usage
 
-## in myFormState.js file
-```jsx
-  import isomorphicState from 'rct-isomorphic-state/dist'
- 
-  const initialState = {
-    name: "",
-    age: 0,
-  };
+## in App.js file
 
-  export default isomorphicState("form1", initialState);
+```jsx
+import Form from "./Form";
+import DataPreviewer from "./DataPreviewer";
+
+const App = () => {
+  return (
+    <>
+      <Form />
+      <DataPreviewer />
+    </>
+  );
+};
+
+export default App;
 ```
 
+## in myFormState.js file
 
-## in App.js file
 ```jsx
-  import Form from './Form'
-  import DataPreviewer from './DataPreviewer';
+import isomorphicState from "rct-isomorphic-state/dist";
+const initialState = {
+  name: "",
+  age: 0,
+};
 
-  const App = () => {
-    return (
-      <>
-        <Form />
-        <DataPreviewer />
-      </>
-    )
-  }
+const formState = isomorphicState({
+  stateId: "myFormSpecificId",
+  initialState,
+  useImmutableResults: "false",
+});
 
-  export default App
+export default formState;
 ```
 
 ## in Form.js file
+
 ```jsx
-  import React from 'react'
-  import myformState from './myFormState'
- 
- const Form = () => {
-  const [state, setState] = formState.useConsumerState()
-  
+import React from "react";
+import formState from "./myFormState";
 
-  const onChange = React.useCallback(({ target:{ value, name } }) => {
-    setState({ path: name, newStateValue: value });
-  } ,[setState]);
+const Form = () => {
+  const [state, setState] = formState.useConsumerState();
 
+  const onChange = React.useCallback(
+    ({ target: { value, name } }) => {
+      setState({ path: name, newStateValue: value });
+    },
+    [setState]
+  );
 
   return (
     <div>
-      <input 
+      <input
         style={styles.input}
         value={state.name}
         onChange={onChange}
@@ -90,71 +138,60 @@ npm i rct-isomorphic-state
         type="text"
       />
 
-      <br/>
+      <br />
 
-      <input 
+      <input
         style={styles.input}
         value={state.age}
         onChange={onChange}
         name="age"
-        type="text"
+        type="number"
       />
     </div>
-  )
+  );
 };
 
 export default Form;
 ```
 
 ## in DataPreviewer.js file
+
 ```jsx
-  import React from 'react';
-  import formState from './myFormState';
+import React from "react";
+import formState from "./myFormState";
 
-  const DataPreviewer = () => {
-    const values = formState.useConsumerState()[0];
+const DataPreviewer = () => {
+  const values = formState.useConsumerState()[0];
 
-    return (
-      <div style={{ width: "48%" }}>
-        {JSON.stringify(values)} 
-      </div>
-    )
-  };
+  return <div>{JSON.stringify(values)}</div>;
+};
 
-  export default DataPreviewer
+export default DataPreviewer;
 ```
 
+## if you noticed we use `useConsumerState` in `DataPreviewer file` to listen to whole state this wil make your component renders on every change for next state update
 
-
-## if you noticed  we use `useConsumerState` in `DataPreviewer file` to listen to whole state this wil make  your component renders on every change for next state update
-  `so what if we need it only reconcile and render for specific prop or deep path update`  we could use `useValuePathSubscribtion` 
-
+`so what if we need it only reconcile and render for specific prop or deep path update` we could use `useValuePathSubscription`
 
 ## in DataPreviewer.js file
+
 ```jsx
-  import React from 'react';
-  import formState from './myFormState';
+import React from "react";
+import formState from "./myFormState";
 
-  const DataPreviewer = () => {
-    const values = formState.useValuePathSubscribtion("name");
+const DataPreviewer = () => {
+  const values = formState.useValuePathSubscription("name");
 
-    return (
-      <div style={{ width: "48%" }}>
-        {JSON.stringify(values)} 
-      </div>
-    )
-  };
+  return <div>{JSON.stringify(values)}</div>;
+};
 
-  export default DataPreviewer
+export default DataPreviewer;
 ```
 
+## easy to use.
 
-# why i don't like context or any lib using it.
+## uses Immutable for sake of memory.
 
-# we have two cases 
-```
-  1- we have one context wraps your entire app
-  <!-- so when a context gets updated it will rerender all components that use that context -->
+## no Context to save components for
 
-  2- if your app app gets larger you will probably use multi contexts wrapping each other    
-```
+unnecessary reconciliations (diffing + rerender) .
