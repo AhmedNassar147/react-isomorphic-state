@@ -18,13 +18,11 @@ npm i rct-isomorphic-state
 **NOTE: by default when you request store data we pass javascript values unless you set `useImmutableResults to "true"` **
 
 # useIsoState Hook
-
-## Params
-    |        Name         |          Type           | Required |
-    | :-----------------: | :---------------------: | :------: |
-    |      fullPath       | string or Array<string> |   true   |
-    | useImmutableResults |         string          |   true   |
-    |    initialState     |   any / immutable ref   |  false   |
+|        Name         |          Type           | Required |
+| :-----------------: | :---------------------: | :------: |
+|      fullPath       | string or Array<string> |   true   |
+| useImmutableResults |         string          |   true   |
+|    initialState     |   any / immutable ref   |  false   |
 
 <details>
   <summary>Click to see Details</summary>
