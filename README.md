@@ -19,18 +19,15 @@ npm i rct-isomorphic-state
 
 # useIsoState Hook
 
-<details>
-  <summary>Click to see Details</summary>
-
 ## Params
-
-```
     |        Name         |          Type           | Required |
     | :-----------------: | :---------------------: | :------: |
     |      fullPath       | string or Array<string> |   true   |
     | useImmutableResults |         string          |   true   |
     |    initialState     |   any / immutable ref   |  false   |
-```
+
+<details>
+  <summary>Click to see Details</summary>
 
 - `fullPath` if you passed array of strings we consider that as deep structure path
 
