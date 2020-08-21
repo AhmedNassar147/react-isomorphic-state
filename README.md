@@ -24,13 +24,13 @@ npm i rct-isomorphic-state
 
 ## Params
 
-```sh
+``
     |        Name         |          Type           | Required |
     | :-----------------: | :---------------------: | :------: |
     |      fullPath       | string or Array<string> |   true   |
     | useImmutableResults |         string          |   true   |
     |    initialState     |   any / immutable ref   |  false   |
-```
+``
 
 - `fullPath` if you passed array of strings we consider that as deep structure path
 
