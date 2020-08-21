@@ -89,18 +89,14 @@ export default () => {
 
 **NOTE: we recommend use this hook for specific deep path update **
 
+|        Name         |          Type           | Required |
+| :-----------------: | :---------------------: | :------: |
+|      fullPath       | string or Array<string> |   true   |
+| useImmutableResults |         string          |   true   |
+|    initialState     |   any / immutable ref   |  false   |
+  
 <details>
   <summary>Click to see Details</summary>
-
-## Params
-
-```sh
-  |        Name         |          Type           | Required |
-  | :-----------------: | :---------------------: | :------: |
-  |      fullPath       | string or Array<string> |   true   |
-  | useImmutableResults |         string          |   true   |
-  |    initialState     |   any / immutable ref   |  false   |
-```
 
 - `fullPath` a path to the state or deep field in state , if you passed array of strings we consider that as deep structure path
 
@@ -152,17 +148,13 @@ export default () => {
 
 # useIsoSelector
 
+|        Name         |          Type           | Required |
+| :-----------------: | :---------------------: | :------: |
+|     fnSelector      | Function(store)         |   true   |
+| useImmutableResults |         string          |   true   |
+
   <details>
   <summary>Click to see Details</summary>
-
-## Params
-
-```sh
-  |        Name         |          Type           | Required |
-  | :-----------------: | :---------------------: | :------: |
-  |     fnSelector      | Function(store)         |   true   |
-  | useImmutableResults |         string          |   true   |
-```
 
 - `fnSelector` a function that take the whole store and return what ever values you need
 
@@ -195,17 +187,13 @@ export default () => {
 
 # useIsoSetState
 
+|        Name         |          Type           | Required |
+| :-----------------: | :---------------------: | :------: |
+|     statId          | string or Array<string> |   true   |
+|     callback        |      Function           |   false  |
+
   <details>
   <summary>Click to see Details</summary>
-
-## Params
-
-```sh
-  |        Name         |          Type           | Required |
-  | :-----------------: | :---------------------: | :------: |
-  |     statId          | string or Array<string> |   true   |
-  |     callback        |      Function           |   false  |
-```
 
 - `statId` if you passed array of strings we consider that as deep structure path,
 
@@ -298,19 +286,15 @@ export default () => {
 
 # updateCache
 
+|        Name                     |          Type           | Required |
+| :-----------------------------: | :---------------------: | :------: |
+|      fullPath                   | string or Array<string> |   true   |
+|     newValues                   |       string            |   true   |
+|    runSubscribers               |       function          |  false   |
+|    notifyListenersWithThatPath  |       boolean           |  false   |
+
   <details>
   <summary>Click to see Details</summary>
-
-## Params
-
-```sh
-  |        Name                     |          Type           | Required |
-  | :-----------------------------: | :---------------------: | :------: |
-  |      fullPath                   | string or Array<string> |   true   |
-  |     newValues                   |       string            |   true   |
-  |    runSubscribers               |       function          |  false   |
-  |    notifyListenersWithThatPath  |       boolean           |  false   |
-```
 
 - `fullPath` if you passed array of strings we consider that as deep structure path
 
