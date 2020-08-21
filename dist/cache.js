@@ -1,22 +1,13 @@
 "use strict";
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 var immutable_1 = require("immutable");
 var utils_1 = require("./utils");
 var Cache = /** @class */ (function () {
     function Cache() {
         this.data = immutable_1.Map();
+        this.cacheListeners = [];
     }
-    // get treeNode full path
-    Cache.prototype.getFullPath = function (currentStatePath, path) {
-        return __spreadArrays(currentStatePath, utils_1.getProperPath(path));
-    };
+    // create new state if given path not exists
     Cache.prototype.injectState = function (path, initialState) {
         var state = utils_1.getProperStateWithType(initialState);
         // if cash has current id
@@ -27,22 +18,59 @@ var Cache = /** @class */ (function () {
         // append new entry with given initial value
         this.data = this.data.setIn(path, state);
     };
-    // update cache state with given id
-    Cache.prototype.updateCache = function (currentStatePath, path, newValues) {
-        var fullPath = this.getFullPath(currentStatePath, path);
-        var newData = this.data.setIn(fullPath, utils_1.getProperStateWithType(newValues));
-        this.data = newData;
-        return newData.getIn(currentStatePath);
+    Cache.prototype.getGivenPathState = function (fullPath) {
+        return this.data.getIn(fullPath);
     };
-    // remove whole treeNode or sub path of treeNode
-    Cache.prototype.removeFromCache = function (currentStatePath, path) {
-        var finalPath = currentStatePath;
-        if (path) {
-            finalPath = this.getFullPath(currentStatePath, path);
+    // call listener
+    Cache.prototype.callListeners = function (path) {
+        var _this = this;
+        var state = this.getGivenPathState(path);
+        setTimeout(function () {
+            _this.cacheListeners.forEach(function (ls) {
+                if (ls && ls.subscriber && utils_1.isSamePaths(ls.path, path)) {
+                    ls.subscriber(state);
+                }
+            });
+        });
+    };
+    // update cache state with given path
+    Cache.prototype.updateCache = function (fullPath, newValues, runSubscribers, notifyListenersWithThatPath) {
+        var _this = this;
+        utils_1.runInvalidPath(fullPath, "updateCache");
+        this.data = this.data.updateIn(fullPath, function () {
+            return utils_1.getProperStateWithType(newValues);
+        });
+        if (notifyListenersWithThatPath) {
+            this.cacheListeners.forEach(function (ls) {
+                if (ls && ls.path === "#store" && ls.subscriber) {
+                    ls.subscriber(_this.data);
+                }
+            });
         }
-        if (this.data.hasIn(finalPath)) {
-            this.data = this.data.deleteIn(finalPath);
+        if (runSubscribers) {
+            runSubscribers();
         }
+        if (notifyListenersWithThatPath) {
+            // check if current update should another states if fullPath equal  subscriber.path;
+            var isThereSubscribersForCurrentPath = this.cacheListeners.some(function (ls) { return ls && utils_1.isSamePaths(ls.path, fullPath); });
+            // if fullPath equal  subscriber.path we call that subscriber with the new value;
+            if (isThereSubscribersForCurrentPath) {
+                this.callListeners(fullPath);
+            }
+        }
+    };
+    // listen for specific cache path id update
+    Cache.prototype.addCacheListener = function (newListener) {
+        utils_1.runInvalidPath(newListener.path, "addCacheListener");
+        this.cacheListeners.push(newListener);
+    };
+    // remove cache listener
+    Cache.prototype.removeCacheListener = function (path) {
+        utils_1.runInvalidPath(path, "removeCacheListener");
+        this.cacheListeners = this.cacheListeners.filter(function (listener) { return listener && !utils_1.isSamePaths(listener.path, path); });
+    };
+    Cache.prototype.getCacheData = function (useImmutableResults) {
+        return utils_1.getEndUserState(this.data, useImmutableResults);
     };
     return Cache;
 }());

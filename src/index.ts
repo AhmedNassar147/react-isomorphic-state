@@ -1,133 +1,213 @@
 //TODO: a research needed to understand the side effect of ignoring `React` namespace.
 import * as R from "react";
 import Cache from "./cache";
-import Notifiers from "./notifier";
-import { getInitialsStateProps, getEndUserState } from "./utils";
+import { Map, isImmutable } from "immutable";
+import {
+  getEndUserState,
+  runInvalidPath,
+  isSsr,
+  normalizeStateProps,
+  getFullPath,
+  getProperStateWithType,
+} from "./utils";
 
 import {
-  IsomorphicStateProps,
-  ConsumerResult,
-  ResultProps,
+  IsoStateResult,
   StateType,
   UpdaterProps,
   PathIdType,
   EndUserStateType,
   UseImmutableResultsType,
   UpdaterPropsGroup,
+  FnSelectorType,
 } from "./interface";
 
 const cacheRef = new Cache();
 
-//  initialize provider.
-export const isomorphicState = <T, U extends UseImmutableResultsType>(
-  props: IsomorphicStateProps<T, U>
-): ResultProps<T, U> => {
-  const { stateId, useSsr, useImmutableResults, initialState } = props;
+const addCacheListener = cacheRef.addCacheListener.bind(cacheRef);
+const updateCache = cacheRef.updateCache.bind(cacheRef);
+const removeCacheListener = cacheRef.removeCacheListener.bind(cacheRef);
+const getCacheData = cacheRef.getCacheData.bind(cacheRef);
 
-  const useAppEffect = useSsr ? R.useLayoutEffect : R.useEffect;
-  let { currentStateId, initState, setStateDone } = getInitialsStateProps(
-    stateId,
-    initialState as T
+// initialize state and return state + setState
+export const useIsoState = <T, U extends UseImmutableResultsType>(
+  fullPath: PathIdType,
+  useImmutableResults: U,
+  initialState?: T
+): IsoStateResult<T, U> => {
+  runInvalidPath(fullPath, "useIsoState");
+
+  const useAppEffect = isSsr() ? R.useLayoutEffect : R.useEffect;
+
+  const config = R.useMemo(
+    () => normalizeStateProps(fullPath, initialState as T),
+    [fullPath, initialState]
   );
 
-  const notifier = new Notifiers(cacheRef);
+  const [state, setState] = R.useState<StateType<T>>(config.initState);
 
-  const getState = getEndUserState(useImmutableResults);
+  useAppEffect(() => {
+    // If `currentStateId` does not exist, add new entry state and added it cache.
+    if (!cacheRef.data.hasIn(config.currentStateId)) {
+      cacheRef.injectState(config.currentStateId, config.initState);
+    }
+    setState(cacheRef.data.getIn(config.currentStateId) as StateType<T>);
+  }, []);
 
-  //TODO: Check `useConsumerState` re-execution.
-  const useConsumerState = (): ConsumerResult<T, U> => {
-    const [state, setState] = R.useState<StateType<T>>(initState);
+  useAppEffect(() => {
+    cacheRef.addCacheListener({
+      path: config.currentStateId,
+      subscriber: setState,
+    });
 
-    const endUserState = R.useMemo(() => getState(state as T), [state]);
+    return () => {
+      cacheRef.removeCacheListener(config.currentStateId);
+    };
+  }, []);
 
-    useAppEffect(() => {
-      if (!setStateDone) {
-        // If `currentStateId` does not exist, add new entry state and added it cache.
-        if (!cacheRef.data.hasIn(currentStateId)) {
-          cacheRef.injectState(currentStateId, initState);
-        }
+  const memoizedState = R.useMemo(
+    () => getEndUserState(state as T, useImmutableResults),
+    [state, useImmutableResults]
+  );
 
-        setState(cacheRef.data.getIn(currentStateId) as StateType<T>);
-        setStateDone = true;
+  const setUpdates = R.useCallback(
+    ({ path, newStateValue }: UpdaterProps<EndUserStateType<T, U>>) => {
+      runInvalidPath(path, "updater");
+
+      let newValue = newStateValue;
+
+      if (newStateValue instanceof Function) {
+        newValue = newStateValue(memoizedState) as EndUserStateType<T, U>;
       }
 
-      notifier.addListener(setState);
-      return () => {
-        notifier.clearListeners<T>(setState);
-      };
-    }, [setState]);
+      cacheRef.updateCache(
+        getFullPath(path, config.currentStateId),
+        newValue,
+        () => cacheRef.callListeners(config.currentStateId)
+      );
+    },
+    [memoizedState, config.currentStateId]
+  );
 
-    const setUpdates = R.useCallback(
-      ({ path, newStateValue }: UpdaterProps<EndUserStateType<T, U>>) => {
-        // if no path provided
-        if (!path) {
-          throw new Error("Please provide Path to update");
-        }
+  // act as setState but we call listeners to notify all components those listen to current state
+  const updater = R.useCallback(
+    (updateProps: UpdaterPropsGroup<EndUserStateType<T, U>>) => {
+      if (Array.isArray(updateProps)) {
+        updateProps.forEach(setUpdates);
+        return;
+      }
 
-        // if path not string or array of strings
-        if (!(typeof path === "string" || Array.isArray(path))) {
-          throw new Error(`${path} should be Array of strings or string`);
-        }
+      // if object of path and new state
+      setUpdates(updateProps);
+    },
+    [setUpdates]
+  );
 
-        // we always provide JS value here to save data from use editing data with immutable him self
-        const newValue =
-          newStateValue instanceof Function
-            ? newStateValue(endUserState)
-            : newStateValue;
-        notifier.callListeners(path, newValue, currentStateId);
-      },
-      [endUserState]
-    );
-
-    // act as setState but we call listeners to notify all components those listen to current state
-    const updater = R.useCallback(
-      (updateProps: UpdaterPropsGroup<EndUserStateType<T, U>>) => {
-        if (Array.isArray(updateProps)) {
-          updateProps.forEach(setUpdates);
-          return;
-        }
-
-        // if object of path and new state
-        setUpdates(updateProps);
-      },
-      [setUpdates]
-    );
-
-    return [endUserState, updater];
-  };
-
-  // subscribe to deep path not the whole state
-  const useValuePathSubscription = <T>(
-    path: PathIdType,
-    initialState?: T
-  ): EndUserStateType<T, U> => {
-    const [value, setState] = R.useState(initialState);
-
-    useAppEffect(
-      () => {
-        setState(initialState);
-      },
-      // eslint-disable-next-line
-      []
-    );
-
-    useAppEffect(
-      () => {
-        notifier.addListener(setState, path);
-        return () => notifier.clearListeners<T>(setState);
-      },
-      // eslint-disable-next-line
-      [setState]
-    );
-
-    return R.useMemo(() => getState(value as T), [value]);
-  };
-
-  return {
-    useConsumerState,
-    useValuePathSubscription,
-    getCache: () => getState(cacheRef.data as any) as EndUserStateType<T, U>,
-  };
+  return [memoizedState, updater];
 };
 
-export default isomorphicState;
+// subscribe to deep path update
+export const useValuePathSubscription = <T, U = UseImmutableResultsType>(
+  fullPath: PathIdType,
+  useImmutableResults: U,
+  initialState?: T
+): EndUserStateType<T, U> => {
+  runInvalidPath(fullPath, "useValuePathSubscription");
+
+  const [value, setState] = R.useState<StateType<T> | undefined>(initialState);
+  const useAppEffect = isSsr() ? R.useLayoutEffect : R.useEffect;
+
+  useAppEffect(
+    () => {
+      addCacheListener({
+        path: fullPath,
+        subscriber: setState,
+      });
+
+      return () => removeCacheListener(fullPath);
+    },
+    // eslint-disable-next-line
+    []
+  );
+
+  return R.useMemo(() => getEndUserState(value as T, useImmutableResults), [
+    value,
+  ]);
+};
+
+// pull down selected values from cache
+export const useIsoSelector = <T, U extends UseImmutableResultsType>(
+  fnSelector: FnSelectorType<U>,
+  useImmutableResults: U
+) => {
+  const useAppEffect = isSsr() ? R.useLayoutEffect : R.useEffect;
+
+  const toggle = R.useState(false)[1];
+  const ref = R.useRef<Map<string, any>>(Map<string, any>());
+
+  const memoizedFn = R.useCallback(
+    (data: Map<string, any>) => {
+      const res = fnSelector(getEndUserState(data, useImmutableResults)) as T;
+
+      const immutableRs = getProperStateWithType(res);
+
+      let forceRender = ref.current !== immutableRs;
+
+      if (isImmutable(ref.current) && isImmutable(immutableRs)) {
+        forceRender = !ref.current.equals(immutableRs);
+      }
+
+      if (forceRender) {
+        toggle((forceUpdate) => !forceUpdate);
+      }
+
+      // @ts-ignore
+      ref.current = immutableRs;
+    },
+    // eslint-disable-next-line
+    [toggle, fnSelector, toggle, ref.current]
+  );
+
+  useAppEffect(
+    () => {
+      cacheRef.addCacheListener({
+        path: "#store",
+        subscriber: memoizedFn,
+      });
+
+      return () => cacheRef.removeCacheListener("#store");
+    },
+    // eslint-disable-next-line
+    []
+  );
+
+  const memoizedSelectorValues = R.useMemo(
+    // @ts-ignore
+    () => getEndUserState(ref.current, useImmutableResults) as T,
+    [ref.current]
+  );
+
+  return memoizedSelectorValues;
+};
+
+// acts as set state
+export const useIsoSetState = (statId: PathIdType, callback?: () => void) => {
+  runInvalidPath(statId);
+
+  return R.useCallback(
+    (newValue: any, fieldPath?: PathIdType) => {
+      // @ts-ignore
+      const fullPath = getFullPath(fieldPath || [""], statId);
+
+      cacheRef.updateCache(fullPath, newValue, () => {
+        cacheRef.callListeners(statId);
+        if (callback instanceof Function) {
+          setTimeout(callback);
+        }
+      });
+    },
+    [statId]
+  );
+};
+
+export { updateCache, addCacheListener, removeCacheListener, getCacheData };

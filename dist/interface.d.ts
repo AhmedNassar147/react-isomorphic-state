@@ -1,20 +1,15 @@
-import * as R from "react";
+/// <reference types="react" />
 import { Map, List } from "immutable";
 export declare type PathIdType = string | string[];
 export declare type UseImmutableResultsType = "true" | "false";
-export interface IsomorphicStateProps<T, U = UseImmutableResultsType> {
-    stateId: PathIdType;
-    useSsr?: boolean;
-    useImmutableResults: U;
-    initialState?: T;
-}
-declare type ImmutableTypes<T> = List<T> | Map<string, any>;
+export declare type ImmutableTypes<T> = T extends Map<string, any> ? T : T extends List<any> ? T : T extends Record<any, any> ? Map<string, any> : T extends Array<any> ? List<T> : T;
 export declare type StateType<T> = T | ImmutableTypes<T>;
-export declare type StateAction<T> = R.Dispatch<R.SetStateAction<StateType<T>>>;
-export declare type IteratableSubscriber<T> = {
-    subscriber: StateAction<T>;
+export declare type StateAction<T> = React.Dispatch<React.SetStateAction<StateType<T>>>;
+export declare type SubscriberType<T> = StateAction<T> | (() => T);
+export declare type SubscriberWithPath<T> = {
+    subscriber: SubscriberType<T>;
     path: PathIdType;
-} | StateAction<T>;
+};
 export declare type EndUserStateType<T, U = UseImmutableResultsType> = U extends "true" ? ImmutableTypes<T> : T;
 export declare type UpdatedCallback<T> = (oldState: T) => T;
 export declare type UpdaterProps<T> = {
@@ -23,11 +18,6 @@ export declare type UpdaterProps<T> = {
 };
 export declare type UpdaterPropsGroup<T> = UpdaterProps<T> | UpdaterProps<T>[];
 export declare type Updater<T> = (updateProps: UpdaterPropsGroup<T>) => void;
-export declare type ConsumerResult<T, U = UseImmutableResultsType> = [EndUserStateType<T, U>, Updater<EndUserStateType<T, U>>];
-export interface ResultProps<T, U = UseImmutableResultsType> {
-    useConsumerState: () => ConsumerResult<T, U>;
-    useValuePathSubscription: <T>(path: PathIdType, initialState?: T) => EndUserStateType<T, U>;
-    getCache: () => EndUserStateType<T, U>;
-}
-export {};
+export declare type IsoStateResult<T, U = UseImmutableResultsType> = [EndUserStateType<T, U>, Updater<EndUserStateType<T, U>>];
+export declare type FnSelectorType<U = UseImmutableResultsType> = (store: U extends "true" ? Map<string, any> : Record<string, any>) => any;
 //# sourceMappingURL=interface.d.ts.map

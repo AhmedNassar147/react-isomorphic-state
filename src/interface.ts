@@ -1,28 +1,27 @@
-import * as R from "react";
 import { Map, List } from "immutable";
 
 export type PathIdType = string | string[];
 export type UseImmutableResultsType = "true" | "false";
 
-export interface IsomorphicStateProps<T, U = UseImmutableResultsType> {
-  stateId: PathIdType;
-  useSsr?: boolean;
-  useImmutableResults: U;
-  initialState?: T;
-}
-
-type ImmutableTypes<T> = List<T> | Map<string, any>;
+export type ImmutableTypes<T> = T extends Map<string, any>
+  ? T
+  : T extends List<any>
+  ? T
+  : T extends Record<any, any>
+  ? Map<string, any>
+  : T extends Array<any>
+  ? List<T>
+  : T;
 
 export type StateType<T> = T | ImmutableTypes<T>;
 
-export type StateAction<T> = R.Dispatch<R.SetStateAction<StateType<T>>>;
+export type StateAction<T> = React.Dispatch<React.SetStateAction<StateType<T>>>;
+export type SubscriberType<T> = StateAction<T> | (() => T);
 
-export type IteratableSubscriber<T> =
-  | {
-      subscriber: StateAction<T>;
-      path: PathIdType;
-    }
-  | StateAction<T>;
+export type SubscriberWithPath<T> = {
+  subscriber: SubscriberType<T>;
+  path: PathIdType;
+};
 
 export type EndUserStateType<T, U = UseImmutableResultsType> = U extends "true"
   ? ImmutableTypes<T>
@@ -39,16 +38,11 @@ export type UpdaterPropsGroup<T> = UpdaterProps<T> | UpdaterProps<T>[];
 
 export type Updater<T> = (updateProps: UpdaterPropsGroup<T>) => void;
 
-export type ConsumerResult<T, U = UseImmutableResultsType> = [
+export type IsoStateResult<T, U = UseImmutableResultsType> = [
   EndUserStateType<T, U>,
   Updater<EndUserStateType<T, U>>
 ];
 
-export interface ResultProps<T, U = UseImmutableResultsType> {
-  useConsumerState: () => ConsumerResult<T, U>;
-  useValuePathSubscription: <T>(
-    path: PathIdType,
-    initialState?: T
-  ) => EndUserStateType<T, U>;
-  getCache: () => EndUserStateType<T, U>;
-}
+export type FnSelectorType<U = UseImmutableResultsType> = (
+  store: U extends "true" ? Map<string, any> : Record<string, any>
+) => any;

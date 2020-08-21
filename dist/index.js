@@ -22,86 +22,128 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isomorphicState = void 0;
+exports.getCacheData = exports.removeCacheListener = exports.addCacheListener = exports.updateCache = exports.useIsoSetState = exports.useIsoSelector = exports.useValuePathSubscription = exports.useIsoState = void 0;
 //TODO: a research needed to understand the side effect of ignoring `React` namespace.
 var R = __importStar(require("react"));
 var cache_1 = __importDefault(require("./cache"));
-var notifier_1 = __importDefault(require("./notifier"));
+var immutable_1 = require("immutable");
 var utils_1 = require("./utils");
 var cacheRef = new cache_1.default();
-//  initialize provider.
-exports.isomorphicState = function (props) {
-    var stateId = props.stateId, useSsr = props.useSsr, useImmutableResults = props.useImmutableResults, initialState = props.initialState;
-    var useAppEffect = useSsr ? R.useLayoutEffect : R.useEffect;
-    var _a = utils_1.getInitialsStateProps(stateId, initialState), currentStateId = _a.currentStateId, initState = _a.initState, setStateDone = _a.setStateDone;
-    var notifier = new notifier_1.default(cacheRef);
-    var getState = utils_1.getEndUserState(useImmutableResults);
-    //TODO: Check `useConsumerState` re-execution.
-    var useConsumerState = function () {
-        var _a = R.useState(initState), state = _a[0], setState = _a[1];
-        var endUserState = R.useMemo(function () { return getState(state); }, [state]);
-        useAppEffect(function () {
-            if (!setStateDone) {
-                // If `currentStateId` does not exist, add new entry state and added it cache.
-                if (!cacheRef.data.hasIn(currentStateId)) {
-                    cacheRef.injectState(currentStateId, initState);
-                }
-                setState(cacheRef.data.getIn(currentStateId));
-                setStateDone = true;
-            }
-            notifier.addListener(setState);
-            return function () {
-                notifier.clearListeners(setState);
-            };
-        }, [setState]);
-        var setUpdates = R.useCallback(function (_a) {
-            var path = _a.path, newStateValue = _a.newStateValue;
-            // if no path provided
-            if (!path) {
-                throw new Error("Please provide Path to update");
-            }
-            // if path not string or array of strings
-            if (!(typeof path === "string" || Array.isArray(path))) {
-                throw new Error(path + " should be Array of strings or string");
-            }
-            // we always provide JS value here to save data from use editing data with immutable him self
-            var newValue = newStateValue instanceof Function
-                ? newStateValue(endUserState)
-                : newStateValue;
-            notifier.callListeners(path, newValue, currentStateId);
-        }, [endUserState]);
-        // act as setState but we call listeners to notify all components those listen to current state
-        var updater = R.useCallback(function (updateProps) {
-            if (Array.isArray(updateProps)) {
-                updateProps.forEach(setUpdates);
-                return;
-            }
-            // if object of path and new state
-            setUpdates(updateProps);
-        }, [setUpdates]);
-        return [endUserState, updater];
-    };
-    // subscribe to deep path not the whole state
-    var useValuePathSubscription = function (path, initialState) {
-        var _a = R.useState(initialState), value = _a[0], setState = _a[1];
-        useAppEffect(function () {
-            setState(initialState);
-        }, 
-        // eslint-disable-next-line
-        []);
-        useAppEffect(function () {
-            notifier.addListener(setState, path);
-            return function () { return notifier.clearListeners(setState); };
-        }, 
-        // eslint-disable-next-line
-        [setState]);
-        return R.useMemo(function () { return getState(value); }, [value]);
-    };
-    return {
-        useConsumerState: useConsumerState,
-        useValuePathSubscription: useValuePathSubscription,
-        getCache: function () { return getState(cacheRef.data); },
-    };
+var addCacheListener = cacheRef.addCacheListener.bind(cacheRef);
+exports.addCacheListener = addCacheListener;
+var updateCache = cacheRef.updateCache.bind(cacheRef);
+exports.updateCache = updateCache;
+var removeCacheListener = cacheRef.removeCacheListener.bind(cacheRef);
+exports.removeCacheListener = removeCacheListener;
+var getCacheData = cacheRef.getCacheData.bind(cacheRef);
+exports.getCacheData = getCacheData;
+// initialize state and return state + setState
+exports.useIsoState = function (fullPath, useImmutableResults, initialState) {
+    utils_1.runInvalidPath(fullPath, "useIsoState");
+    var useAppEffect = utils_1.isSsr() ? R.useLayoutEffect : R.useEffect;
+    var config = R.useMemo(function () { return utils_1.normalizeStateProps(fullPath, initialState); }, [fullPath, initialState]);
+    var _a = R.useState(config.initState), state = _a[0], setState = _a[1];
+    useAppEffect(function () {
+        // If `currentStateId` does not exist, add new entry state and added it cache.
+        if (!cacheRef.data.hasIn(config.currentStateId)) {
+            cacheRef.injectState(config.currentStateId, config.initState);
+        }
+        setState(cacheRef.data.getIn(config.currentStateId));
+    }, []);
+    useAppEffect(function () {
+        cacheRef.addCacheListener({
+            path: config.currentStateId,
+            subscriber: setState,
+        });
+        return function () {
+            cacheRef.removeCacheListener(config.currentStateId);
+        };
+    }, []);
+    var memoizedState = R.useMemo(function () { return utils_1.getEndUserState(state, useImmutableResults); }, [state, useImmutableResults]);
+    var setUpdates = R.useCallback(function (_a) {
+        var path = _a.path, newStateValue = _a.newStateValue;
+        utils_1.runInvalidPath(path, "updater");
+        var newValue = newStateValue;
+        if (newStateValue instanceof Function) {
+            newValue = newStateValue(memoizedState);
+        }
+        cacheRef.updateCache(utils_1.getFullPath(path, config.currentStateId), newValue, function () { return cacheRef.callListeners(config.currentStateId); });
+    }, [memoizedState, config.currentStateId]);
+    // act as setState but we call listeners to notify all components those listen to current state
+    var updater = R.useCallback(function (updateProps) {
+        if (Array.isArray(updateProps)) {
+            updateProps.forEach(setUpdates);
+            return;
+        }
+        // if object of path and new state
+        setUpdates(updateProps);
+    }, [setUpdates]);
+    return [memoizedState, updater];
 };
-exports.default = exports.isomorphicState;
+// subscribe to deep path update
+exports.useValuePathSubscription = function (fullPath, useImmutableResults, initialState) {
+    utils_1.runInvalidPath(fullPath, "useValuePathSubscription");
+    var _a = R.useState(initialState), value = _a[0], setState = _a[1];
+    var useAppEffect = utils_1.isSsr() ? R.useLayoutEffect : R.useEffect;
+    useAppEffect(function () {
+        addCacheListener({
+            path: fullPath,
+            subscriber: setState,
+        });
+        return function () { return removeCacheListener(fullPath); };
+    }, 
+    // eslint-disable-next-line
+    []);
+    return R.useMemo(function () { return utils_1.getEndUserState(value, useImmutableResults); }, [
+        value,
+    ]);
+};
+// pull down selected values from cache
+exports.useIsoSelector = function (fnSelector, useImmutableResults) {
+    var useAppEffect = utils_1.isSsr() ? R.useLayoutEffect : R.useEffect;
+    var toggle = R.useState(false)[1];
+    var ref = R.useRef(immutable_1.Map());
+    var memoizedFn = R.useCallback(function (data) {
+        var res = fnSelector(utils_1.getEndUserState(data, useImmutableResults));
+        var immutableRs = utils_1.getProperStateWithType(res);
+        var forceRender = ref.current !== immutableRs;
+        if (immutable_1.isImmutable(ref.current) && immutable_1.isImmutable(immutableRs)) {
+            forceRender = !ref.current.equals(immutableRs);
+        }
+        if (forceRender) {
+            toggle(function (forceUpdate) { return !forceUpdate; });
+        }
+        // @ts-ignore
+        ref.current = immutableRs;
+    }, 
+    // eslint-disable-next-line
+    [toggle, fnSelector, toggle, ref.current]);
+    useAppEffect(function () {
+        cacheRef.addCacheListener({
+            path: "#store",
+            subscriber: memoizedFn,
+        });
+        return function () { return cacheRef.removeCacheListener("#store"); };
+    }, 
+    // eslint-disable-next-line
+    []);
+    var memoizedSelectorValues = R.useMemo(
+    // @ts-ignore
+    function () { return utils_1.getEndUserState(ref.current, useImmutableResults); }, [ref.current]);
+    return memoizedSelectorValues;
+};
+// acts as set state
+exports.useIsoSetState = function (statId, callback) {
+    utils_1.runInvalidPath(statId);
+    return R.useCallback(function (newValue, fieldPath) {
+        // @ts-ignore
+        var fullPath = utils_1.getFullPath(fieldPath || [""], statId);
+        cacheRef.updateCache(fullPath, newValue, function () {
+            cacheRef.callListeners(statId);
+            if (callback instanceof Function) {
+                setTimeout(callback);
+            }
+        });
+    }, [statId]);
+};
 //# sourceMappingURL=index.js.map

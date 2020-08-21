@@ -6,26 +6,33 @@ import {
   EndUserStateType,
 } from "./interface";
 
-export const getProperPath = (statId: PathIdType): string[] => {
-  // if no id provided
-  if (!statId) {
-    throw new Error(`Function \`getProperPath\`:  State Id Must Be Provided.`);
-  }
-
-  // if path id string or array of strings
+export const runInvalidPath = (paths: PathIdType, fnName?: string) => {
   if (
-    !(typeof statId === "string" || (Array.isArray(statId) && !!statId.length))
+    !(typeof paths === "string" || (Array.isArray(paths) && !!paths.length))
   ) {
     throw new Error(
-      `Function \`getProperPath\`: \`${statId}\` should be Array of strings or string.`
+      `Function \`${
+        fnName || "runInvalidPath"
+      }\`: \`${paths}\` should be Array of strings or string.`
     );
   }
+};
 
+export const normalizePath = (statId: PathIdType): string[] => {
   if (typeof statId === "string") {
     return [statId];
   }
 
   return statId;
+};
+
+export const getFullPath = (path: PathIdType, currentStatePath?: string[]) => {
+  let subPath = normalizePath(path);
+
+  if (currentStatePath) {
+    return [...currentStatePath, ...subPath];
+  }
+  return subPath;
 };
 
 export const getProperStateWithType = <T>(initialState: T): StateType<T> => {
@@ -40,25 +47,10 @@ export const getProperStateWithType = <T>(initialState: T): StateType<T> => {
   return initialState;
 };
 
-export const getInitialsStateProps = <T>(
-  stateId: PathIdType,
-  initialState: T
-) => {
-  if (typeof initialState === "undefined") {
-    // @ts-ignore
-    initialState = Map();
-  }
-
-  return {
-    currentStateId: getProperPath(stateId),
-    initState: getProperStateWithType(initialState),
-    setStateDone: false,
-  };
-};
-
-export const getEndUserState = <U = UseImmutableResultsType>(
+export const getEndUserState = <T, U = UseImmutableResultsType>(
+  state: T,
   useImmutableResults: U
-) => <T>(state: T): EndUserStateType<T, U> => {
+): EndUserStateType<T, U> => {
   const isImmutableData = isImmutable(state);
 
   if (isImmutableData) {
@@ -71,4 +63,28 @@ export const getEndUserState = <U = UseImmutableResultsType>(
   }
 
   return state as EndUserStateType<T, U>;
+};
+
+export const isSamePaths = (
+  path: PathIdType,
+  secondPath: PathIdType
+): boolean => {
+  return path.toString() === secondPath.toString();
+};
+
+export const isSsr = () => typeof window === "undefined";
+
+export const normalizeStateProps = <T>(
+  stateId: PathIdType,
+  initialState: T
+) => {
+  if (typeof initialState === "undefined") {
+    // @ts-ignore
+    initialState = Map();
+  }
+
+  return {
+    currentStateId: normalizePath(stateId),
+    initState: getProperStateWithType(initialState),
+  };
 };
