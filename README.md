@@ -24,11 +24,13 @@ npm i rct-isomorphic-state
 
 ## Params
 
+```sh
     |        Name         |          Type           | Required |
     | :-----------------: | :---------------------: | :------: |
     |      fullPath       | string or Array<string> |   true   |
     | useImmutableResults |         string          |   true   |
     |    initialState     |   any / immutable ref   |  false   |
+```
 
 - `fullPath` if you passed array of strings we consider that as deep structure path
 
@@ -97,11 +99,13 @@ export default () => {
 
 ## Params
 
-    |        Name         |          Type           | Required |
-    | :-----------------: | :---------------------: | :------: |
-    |      fullPath       | string or Array<string> |   true   |
-    | useImmutableResults |         string          |   true   |
-    |    initialState     |   any / immutable ref   |  false   |
+```sh
+  |        Name         |          Type           | Required |
+  | :-----------------: | :---------------------: | :------: |
+  |      fullPath       | string or Array<string> |   true   |
+  | useImmutableResults |         string          |   true   |
+  |    initialState     |   any / immutable ref   |  false   |
+```
 
 - `fullPath` a path to the state or deep field in state , if you passed array of strings we consider that as deep structure path
 
@@ -158,10 +162,12 @@ export default () => {
 
 ## Params
 
-    |        Name         |          Type           | Required |
-    | :-----------------: | :---------------------: | :------: |
-    |     fnSelector      | Function(store)         |   true   |
-    | useImmutableResults |         string          |   true   |
+```sh
+  |        Name         |          Type           | Required |
+  | :-----------------: | :---------------------: | :------: |
+  |     fnSelector      | Function(store)         |   true   |
+  | useImmutableResults |         string          |   true   |
+```
 
 - `fnSelector` a function that take the whole store and return what ever values you need
 
@@ -199,10 +205,12 @@ export default () => {
 
 ## Params
 
-    |        Name         |          Type           | Required |
-    | :-----------------: | :---------------------: | :------: |
-    |     statId          | string or Array<string> |   true   |
-    |     callback        |      Function           |   false   |
+```sh
+  |        Name         |          Type           | Required |
+  | :-----------------: | :---------------------: | :------: |
+  |     statId          | string or Array<string> |   true   |
+  |     callback        |      Function           |   false  |
+```
 
 - `statId` if you passed array of strings we consider that as deep structure path,
 
@@ -300,12 +308,14 @@ export default () => {
 
 ## Params
 
-    |        Name                     |          Type           | Required |
-    | :-----------------------------: | :---------------------: | :------: |
-    |      fullPath                   | string or Array<string> |   true   |
-    |     newValues                   |       string            |   true   |
-    |    runSubscribers               |       function          |  false   |
-    |    notifyListenersWithThatPath  |       boolean           |  false   |
+```sh
+  |        Name                     |          Type           | Required |
+  | :-----------------------------: | :---------------------: | :------: |
+  |      fullPath                   | string or Array<string> |   true   |
+  |     newValues                   |       string            |   true   |
+  |    runSubscribers               |       function          |  false   |
+  |    notifyListenersWithThatPath  |       boolean           |  false   |
+```
 
 - `fullPath` if you passed array of strings we consider that as deep structure path
 
