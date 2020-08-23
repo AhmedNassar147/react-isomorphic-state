@@ -21,11 +21,11 @@ npm i rct-isomorphic-state
 
 ## this hook creates new state if the given fullPath doesn't exist before
 
-|        Name         |                Type                | Required |
-| :-----------------: | :--------------------------------: | :------: |
-|      fullPath       | `string or Array<string | number>` |   true   |
-| useImmutableResults |      `string = true | false`       |   true   |
-|    initialState     |       `any / immutable ref`        |  false   |
+|        Name         |               Type                | Required |
+| :-----------------: | :-------------------------------: | :------: |
+|      fullPath       | string or Array<string or number> |   true   |
+| useImmutableResults |     string of (true or false)     |   true   |
+|    initialState     |        any / immutable ref        |  false   |
 
 <details>
   <summary>Click to see Details</summary>
@@ -94,9 +94,9 @@ export default () => {
 
 |        Name         |                Type                | Required |
 | :-----------------: | :--------------------------------: | :------: |
-|      fullPath       | `string or Array<string | number>` |   true   |
-| useImmutableResults |      `string = true | false`       |   true   |
-|    initialState     |       `any / immutable ref`        |  false   |
+|      fullPath       | string or Array<string  or number> |   true   |
+| useImmutableResults |     string of (true or false)      |   true   |
+|    initialState     |        any / immutable ref         |  false   |
 
 <details>
   <summary>Click to see Details</summary>
@@ -151,10 +151,10 @@ export default () => {
 
 # useIsoSelector
 
-|        Name         |          Type           | Required |
-| :-----------------: | :---------------------: | :------: |
-|     fnSelector      |    `Function(store)`    |   true   |
-| useImmutableResults | `string = true | false` |   true   |
+|        Name         |           Type            | Required |
+| :-----------------: | :-----------------------: | :------: |
+|     fnSelector      |      Function(store)      |   true   |
+| useImmutableResults | string of (true or false) |   true   |
 
   <details>
   <summary>Click to see Details</summary>
@@ -190,10 +190,10 @@ export default () => {
 
 # useIsoSetState
 
-|   Name   |                Type                | Required |
-| :------: | :--------------------------------: | :------: |
-|  statId  | `string or Array<string | number>` |   true   |
-| callback |             `Function`             |  false   |
+|   Name   |               Type                | Required |
+| :------: | :-------------------------------: | :------: |
+|  statId  | string or Array<string ot number> |   true   |
+| callback |             Function              |  false   |
 
   <details>
   <summary>Click to see Details</summary>
@@ -225,9 +225,9 @@ export default () => {
 
 # getCacheData
 
-|        Name         |          Type           | Required |
-| :-----------------: | :---------------------: | :------: |
-| useImmutableResults | `string = true | false` |   true   |
+|        Name         |           Type            | Required |
+| :-----------------: | :-----------------------: | :------: |
+| useImmutableResults | string of (true or false) |   true   |
 
   <details>
   <summary>Click to see Details</summary>
@@ -293,12 +293,12 @@ export default () => {
 
 # updateCache
 
-|            Name             |                Type                | Required |
-| :-------------------------: | :--------------------------------: | :------: |
-|          fullPath           | `string or Array<string | number>` |   true   |
-|          newValue           |       `any / immutable ref`        |   true   |
-|       runSubscribers        |             `function`             |  false   |
-| notifyListenersWithThatPath |             `boolean`              |  false   |
+|            Name             |               Type                | Required |
+| :-------------------------: | :-------------------------------: | :------: |
+|          fullPath           | string or Array<string or number> |   true   |
+|          newValue           |        any / immutable ref        |   true   |
+|       runSubscribers        |             Function              |  false   |
+| notifyListenersWithThatPath |              boolean              |  false   |
 
   <details>
   <summary>Click to see Details</summary>
