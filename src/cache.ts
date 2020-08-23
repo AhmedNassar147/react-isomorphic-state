@@ -17,7 +17,9 @@ export default class Cache {
   private cacheListeners: SubscriberWithPath<any>[] = [];
 
   // create new state if given path not exists
-  injectState<T>(path: string[], initialState: T) {
+  injectState<T>(path: (string | number)[], initialState: T) {
+    runInvalidPath(path);
+
     const state = getProperStateWithType(initialState);
 
     // if cash has current id
@@ -36,6 +38,7 @@ export default class Cache {
 
   // call listener
   callListeners(path: PathIdType) {
+    runInvalidPath(path);
     const state = this.getGivenPathState(path);
 
     setTimeout(() => {
@@ -50,17 +53,17 @@ export default class Cache {
   // update cache state with given path
   updateCache<T>(
     fullPath: PathIdType,
-    newValues: T,
+    newValue: T,
     runSubscribers?: () => void,
-    notifyListenersWithThatPath?: boolean
+    notifyListenersWithThisPath?: boolean
   ) {
     runInvalidPath(fullPath, "updateCache");
 
     this.data = this.data.updateIn(fullPath, () =>
-      getProperStateWithType(newValues)
+      getProperStateWithType(newValue)
     );
 
-    if (notifyListenersWithThatPath) {
+    if (notifyListenersWithThisPath) {
       this.cacheListeners.forEach((ls) => {
         if (ls && ls.path === "#store" && ls.subscriber) {
           ls.subscriber(this.data);
@@ -72,7 +75,7 @@ export default class Cache {
       runSubscribers();
     }
 
-    if (notifyListenersWithThatPath) {
+    if (notifyListenersWithThisPath) {
       // check if current update should another states if fullPath equal  subscriber.path;
       const isThereSubscribersForCurrentPath = this.cacheListeners.some(
         (ls) => ls && isSamePaths(ls.path, fullPath)

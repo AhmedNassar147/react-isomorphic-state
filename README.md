@@ -18,20 +18,23 @@ npm i rct-isomorphic-state
 **NOTE: by default when you request store data we pass javascript values unless you set `useImmutableResults to "true"` **
 
 # useIsoState Hook
-|        Name         |          Type           | Required |
-| :-----------------: | :---------------------: | :------: |
-|      fullPath       | string or Array<string> |   true   |
-| useImmutableResults |         string          |   true   |
-|    initialState     |   any / immutable ref   |  false   |
+
+## this hook creates new state if the given fullPath doesn't exist before
+
+|        Name         |                Type                | Required |
+| :-----------------: | :--------------------------------: | :------: |
+|      fullPath       | `string or Array<string | number>` |   true   |
+| useImmutableResults |      `string = true | false`       |   true   |
+|    initialState     |       `any / immutable ref`        |  false   |
 
 <details>
   <summary>Click to see Details</summary>
 
-- `fullPath` if you passed array of strings we consider that as deep structure path
+- `fullPath` a path to the state or deep field in state you wanna access or create, if you passed array of strings | numbers we consider that as deep structure path
 
 - `useImmutableResults` if "true" you could expect the state result as immutable ref else it's js data
 
-- `initialState` could be any js data or immutable ref and if you passed undefined value we defaults it to immutable Map
+- `initialState` could be any js value or immutable ref and if you passed undefined value we defaults it to immutable `Map | List`
 
 ## Example
 
@@ -89,16 +92,16 @@ export default () => {
 
 **NOTE: we recommend use this hook for specific deep path update **
 
-|        Name         |          Type           | Required |
-| :-----------------: | :---------------------: | :------: |
-|      fullPath       | string or Array<string> |   true   |
-| useImmutableResults |         string          |   true   |
-|    initialState     |   any / immutable ref   |  false   |
-  
+|        Name         |                Type                | Required |
+| :-----------------: | :--------------------------------: | :------: |
+|      fullPath       | `string or Array<string | number>` |   true   |
+| useImmutableResults |      `string = true | false`       |   true   |
+|    initialState     |       `any / immutable ref`        |  false   |
+
 <details>
   <summary>Click to see Details</summary>
 
-- `fullPath` a path to the state or deep field in state , if you passed array of strings we consider that as deep structure path
+- `fullPath` a path to the state or deep field in state you wanna access , if you passed array of strings | numbers we consider that as deep structure path
 
 - `useImmutableResults` if "true" you could expect the state result as immutable ref else it's js data
 
@@ -150,8 +153,8 @@ export default () => {
 
 |        Name         |          Type           | Required |
 | :-----------------: | :---------------------: | :------: |
-|     fnSelector      | Function(store)         |   true   |
-| useImmutableResults |         string          |   true   |
+|     fnSelector      |    `Function(store)`    |   true   |
+| useImmutableResults | `string = true | false` |   true   |
 
   <details>
   <summary>Click to see Details</summary>
@@ -187,15 +190,15 @@ export default () => {
 
 # useIsoSetState
 
-|        Name         |          Type           | Required |
-| :-----------------: | :---------------------: | :------: |
-|     statId          | string or Array<string> |   true   |
-|     callback        |      Function           |   false  |
+|   Name   |                Type                | Required |
+| :------: | :--------------------------------: | :------: |
+|  statId  | `string or Array<string | number>` |   true   |
+| callback |             `Function`             |  false   |
 
   <details>
   <summary>Click to see Details</summary>
 
-- `statId` if you passed array of strings we consider that as deep structure path,
+- `statId` a path to the state or deep field in state you wanna access , if you passed array of strings | numbers we consider that as deep structure path,
 
 - `callback` if provided it will be executed after state update
 
@@ -221,6 +224,10 @@ export default () => {
 </details>
 
 # getCacheData
+
+|        Name         |          Type           | Required |
+| :-----------------: | :---------------------: | :------: |
+| useImmutableResults | `string = true | false` |   true   |
 
   <details>
   <summary>Click to see Details</summary>
@@ -286,21 +293,21 @@ export default () => {
 
 # updateCache
 
-|        Name                     |          Type           | Required |
-| :-----------------------------: | :---------------------: | :------: |
-|      fullPath                   | string or Array<string> |   true   |
-|     newValues                   |       string            |   true   |
-|    runSubscribers               |       function          |  false   |
-|    notifyListenersWithThatPath  |       boolean           |  false   |
+|            Name             |                Type                | Required |
+| :-------------------------: | :--------------------------------: | :------: |
+|          fullPath           | `string or Array<string | number>` |   true   |
+|          newValue           |       `any / immutable ref`        |   true   |
+|       runSubscribers        |             `function`             |  false   |
+| notifyListenersWithThatPath |             `boolean`              |  false   |
 
   <details>
   <summary>Click to see Details</summary>
 
-- `fullPath` if you passed array of strings we consider that as deep structure path
+- `fullPath` the path you wanna access to update it with new value
 
-- `newValues` new value for update
+- `newValue` new value for update
 
-- `notifyListenersWithThatPath` if true we notify other listeners those listen for `fullPath prop`
+- `notifyListenersWithThisPath` if true we notify other listeners those listen for `fullPath prop`
 
 - `runSubscribers` if you want to notify another listeners
 
@@ -318,7 +325,7 @@ const onChange = (e) => {
     // run your listeners
     //  () => null,
 
-    // notifyListenersWithThatPath: don't notify Listeners listen for  ["stateId", "age"]
+    // notifyListenersWithThisPath: don't notify Listeners listen for  ["stateId", "age"]
     false
   );
 };

@@ -13,12 +13,12 @@ export const runInvalidPath = (paths: PathIdType, fnName?: string) => {
     throw new Error(
       `Function \`${
         fnName || "runInvalidPath"
-      }\`: \`${paths}\` should be Array of strings or string.`
+      }\`: \`${paths}\` should be Array<string> | string | Array<number> `
     );
   }
 };
 
-export const normalizePath = (statId: PathIdType): string[] => {
+export const normalizePath = (statId: PathIdType): (string | number)[] => {
   if (typeof statId === "string") {
     return [statId];
   }
@@ -26,7 +26,10 @@ export const normalizePath = (statId: PathIdType): string[] => {
   return statId;
 };
 
-export const getFullPath = (path: PathIdType, currentStatePath?: string[]) => {
+export const getFullPath = (
+  path: PathIdType,
+  currentStatePath?: (string | number)[]
+) => {
   let subPath = normalizePath(path);
 
   if (currentStatePath) {

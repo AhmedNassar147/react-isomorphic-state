@@ -9,6 +9,7 @@ import {
   normalizeStateProps,
   getFullPath,
   getProperStateWithType,
+  normalizePath,
 } from "./utils";
 
 import {
@@ -115,17 +116,19 @@ export const useValuePathSubscription = <T, U = UseImmutableResultsType>(
 ): EndUserStateType<T, U> => {
   runInvalidPath(fullPath, "useValuePathSubscription");
 
+  const normalizedPath = R.useMemo(() => normalizePath(fullPath), [fullPath]);
+
   const [value, setState] = R.useState<StateType<T> | undefined>(initialState);
   const useAppEffect = isSsr() ? R.useLayoutEffect : R.useEffect;
 
   useAppEffect(
     () => {
       addCacheListener({
-        path: fullPath,
+        path: normalizedPath,
         subscriber: setState,
       });
 
-      return () => removeCacheListener(fullPath);
+      return () => removeCacheListener(normalizedPath);
     },
     // eslint-disable-next-line
     []
@@ -176,7 +179,10 @@ export const useIsoSelector = <T, U extends UseImmutableResultsType>(
         subscriber: memoizedFn,
       });
 
-      return () => cacheRef.removeCacheListener("#store");
+      return () => {
+        cacheRef.removeCacheListener("#store");
+        ref.current = Map<string, any>();
+      };
     },
     // eslint-disable-next-line
     []

@@ -1,6 +1,6 @@
 import { Map, List } from "immutable";
 
-export type PathIdType = string | string[];
+export type PathIdType = string | (string | number)[];
 export type UseImmutableResultsType = "true" | "false";
 
 export type ImmutableTypes<T> = T extends Map<string, any>
