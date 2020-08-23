@@ -94,7 +94,7 @@ export default () => {
 
 |        Name         |                Type                | Required |
 | :-----------------: | :--------------------------------: | :------: |
-|      fullPath       | string or Array<string  or number> |   true   |
+|      fullPath       | string or Array of (string or number) |   true   |
 | useImmutableResults |     string of (true or false)      |   true   |
 |    initialState     |        any / immutable ref         |  false   |
 
@@ -192,7 +192,7 @@ export default () => {
 
 |   Name   |               Type                | Required |
 | :------: | :-------------------------------: | :------: |
-|  statId  | string or Array<string ot number> |   true   |
+|  statId  | string or Array of (string or number) |   true   |
 | callback |             Function              |  false   |
 
   <details>
@@ -295,7 +295,7 @@ export default () => {
 
 |            Name             |               Type                | Required |
 | :-------------------------: | :-------------------------------: | :------: |
-|          fullPath           | string or Array<string or number> |   true   |
+|          fullPath           | string or Array of (string or number) |   true   |
 |          newValue           |        any / immutable ref        |   true   |
 |       runSubscribers        |             Function              |  false   |
 | notifyListenersWithThatPath |              boolean              |  false   |
