@@ -67,7 +67,7 @@ exports.useIsoState = function (fullPath, useImmutableResults, initialState) {
         if (newStateValue instanceof Function) {
             newValue = newStateValue(memoizedState);
         }
-        cacheRef.updateCache(utils_1.getFullPath(path, config.currentStateId), newValue, function () { return cacheRef.callListeners(config.currentStateId); });
+        cacheRef.updateCache(utils_1.getFullPath(path, config.currentStateId), newValue, function () { return cacheRef.callListeners(config.currentStateId); }, true);
     }, [memoizedState, config.currentStateId]);
     // act as setState but we call listeners to notify all components those listen to current state
     var updater = R.useCallback(function (updateProps) {
@@ -143,7 +143,7 @@ exports.useIsoSetState = function (statId, callback) {
             if (callback instanceof Function) {
                 setTimeout(callback);
             }
-        });
+        }, true);
     }, [statId]);
 };
 //# sourceMappingURL=index.js.map

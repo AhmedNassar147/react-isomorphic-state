@@ -83,7 +83,8 @@ export const useIsoState = <T, U extends UseImmutableResultsType>(
       cacheRef.updateCache(
         getFullPath(path, config.currentStateId),
         newValue,
-        () => cacheRef.callListeners(config.currentStateId)
+        () => cacheRef.callListeners(config.currentStateId),
+        true
       );
     },
     [memoizedState, config.currentStateId]
@@ -199,12 +200,17 @@ export const useIsoSetState = (statId: PathIdType, callback?: () => void) => {
       // @ts-ignore
       const fullPath = getFullPath(fieldPath || [""], statId);
 
-      cacheRef.updateCache(fullPath, newValue, () => {
-        cacheRef.callListeners(statId);
-        if (callback instanceof Function) {
-          setTimeout(callback);
-        }
-      });
+      cacheRef.updateCache(
+        fullPath,
+        newValue,
+        () => {
+          cacheRef.callListeners(statId);
+          if (callback instanceof Function) {
+            setTimeout(callback);
+          }
+        },
+        true
+      );
     },
     [statId]
   );
