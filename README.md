@@ -23,7 +23,7 @@ npm i rct-isomorphic-state
 
 |        Name         |               Type                | Required |
 | :-----------------: | :-------------------------------: | :------: |
-|      fullPath       | string or Array<string or number> |   true   |
+|      fullPath       | string or Array of (string or number) |   true   |
 | useImmutableResults |     string of (true or false)     |   true   |
 |    initialState     |        any / immutable ref        |  false   |
 
